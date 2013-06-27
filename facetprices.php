@@ -1,7 +1,5 @@
 <?php
-
 require_once 'common.php';
-require_once 'functions.php';
 
 $brands = array('One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten');
 $docs = array();
@@ -60,7 +58,7 @@ foreach($attrs as $attr){
 }
 
 //expressions are not yet supported in multi-query optimization,so we run them separate
-$stmt = $ln_sph->prepare( "SELECT *,GROUPBY() as selected,COUNT(*) as cnt,(IF(price>=800,4,IF(price>=600,3,IF(price>=400,2,IF(price>=200,1,0))))) as price_seg FROM
+$stmt = $ln_sph->prepare( "SELECT *,GROUPBY() as selected,COUNT(*) as cnt, INTERVAL(price,200,400,600,800) as price_seg FROM
 $indexes WHERE MATCH(:match) $where  GROUP BY price_seg ORDER BY cnt DESC LIMIT 0,10");
 $stmt->bindValue(':match', $query,PDO::PARAM_STR);
 $stmt->execute();
@@ -94,13 +92,9 @@ include 'template/header.php';
 	<form method="GET" action="" id="search_form">
 		<div class="row-fluid">
 			<div class="span2">
-				<div class="sitebar-nav">
-					<ul class="nav nav-list">
-						<li><a
-							href="">Original
-								article</a>
-						</li>
-						<ul>
+				<div class="sitebar-nav offset1">
+		<br>
+		<br><br><br>
 
 							<fieldset>
 								<legend>Brands</legend>
@@ -164,19 +158,19 @@ include 'template/header.php';
 					<ul class="nav nav-pills">
 	<ul class="nav nav-pills">
 		<li><a href="index.php">Simple Faceting</a></li>
-		<li class="active"><a href="facetprices.php">Facet with segmented price</a></li>
-		<li ><a href="facetmulti.php">Facet with multiple selection</a></li>
+		<li class="active"><a href="facetprices.php">Facets with segmented price</a></li>
+		<li ><a href="facetmulti.php">Facets with multiple selection</a></li>
 	</ul>
 					</ul>
 					<header>
-						<h1>Facet with segmented price</h1>
+						<h1>Facets with multiple selection</h1>
 					</header>
 					<div class="row">
 						<div class="span9">
-							<p>Faceting with a segmented price. Price's facet is run separate, since expressions are not yet available for multi-query optimization</p>
+							
 							<div class="well form-search">
 								<input type="text" class="input-large" name="query" id="suggest"
-									autocomplete="off" value="<?=$_GET['query'];?>"> <input
+									autocomplete="off" value="<?=isset($_GET['query'])?htmlentities($_GET['query']):''?>"> <input
 									type="submit" class="btn btn-primary" id="send" name="send"
 									value="Submit">
 								<button type="reset" class="btn " value="Reset">Reset</button>

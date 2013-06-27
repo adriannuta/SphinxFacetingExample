@@ -1,7 +1,6 @@
 <?php
-
 require_once 'common.php';
-require_once 'functions.php';
+
 $brands = array('One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten');
 $docs = array();
 
@@ -74,12 +73,9 @@ include 'template/header.php';
 	<form method="GET" action="" id="search_form">
 	 <div class="row-fluid">
 	  <div class="span2">
-	   <div class="sitebar-nav">
-	    <ul class="nav nav-list">
-			<li><a href="">Original article</a>
-			</li>
-		<ul>
-		
+	   <div class="sitebar-nav offset1">
+		<br>
+		<br><br><br>
 		 <fieldset>
     		<legend>Brands</legend>
 		 	<div class="control-group">
@@ -132,9 +128,9 @@ include 'template/header.php';
 	</header>
 	<div class="row">
 		<div class="span9">
-			<p>A multi-query is made on brands (integer) and categories (MVA). A separate query is name on strin property</p>
+			<p>A multi-query is made on brands (integer) and categories (MVA). A separate query is made on string property</p>
 			<div class="well form-search">
-				<input type="text" class="input-large" name="query" id="suggest" autocomplete="off" value="<?=$_GET['query'];?>"> 
+				<input type="text" class="input-large" name="query" id="suggest" autocomplete="off" value="<?=isset($_GET['query'])?htmlentities($_GET['query']):''?>"> 
 				<input type="submit" class="btn btn-primary" id="send" name="send" value="Submit">
 				 <button type="reset"class="btn " value="Reset">Reset</button>
 			</div>
