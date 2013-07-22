@@ -8,8 +8,11 @@ Sphinx querying is made via SphinxQL using PDO driver.
 Requirements :
 -------------------------------------------
 LAMP  
-Sphinx search  
+Sphinx search ( recommended 2.1.1 or higher)  
 PHP with PDO mysql  
+
+Please note that the code is made for 2.1.1. The code use LIKE operator on SHOW META.    
+For older versions, use only SHOW META, fetch all rows and lookup for the row that has the 'total_found'.  
 
 Installation :
 -------------------------------------------
