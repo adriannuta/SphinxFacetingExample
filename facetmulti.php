@@ -107,7 +107,7 @@ foreach($attrs as $attr){
 
 //expressions are not yet supported in multi-query optimization,so we run them separate
 
-$stmt = $ln_sph->prepare( "SELECT *,GROUPBY() as selected,COUNT(*) as cnt,INTERVAL(price,200,400,600,800) as price_seg FROM
+$stmt = $ln_sph->prepare( "SELECT *,GROUPBY() as selected,COUNT(DISTINCT categories) as cnt,INTERVAL(price,200,400,600,800) as price_seg FROM
 		$indexes WHERE MATCH(:match)   $where_price  GROUP BY price_seg ORDER BY price_seg ASC  LIMIT 0,10");
 $stmt->bindValue(':match', $search_query,PDO::PARAM_STR);
 $stmt->execute();
