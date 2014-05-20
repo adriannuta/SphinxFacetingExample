@@ -214,9 +214,11 @@ include 'template/header.php';
 						<div class="alert alert-success"><?php echo $str_query;?></div>
 					
 						<?php if (count($docs) > 0): ?>
+						
 						<p class="lead">
 							Total found:<?=$total_found?>
 						</p>
+						<div class="span9"><?php include 'template/paginator.php';?></div>
 						<div class="span9">
 							<table class="table">
 								<tr>
