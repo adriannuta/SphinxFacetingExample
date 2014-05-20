@@ -25,6 +25,9 @@ Generate the RT index
  
     $ php filldb.php
 
+Live demo:
+-------------------------------------------
+http://sphinxdemos.adriannuta.com/SphinxFacetingExample/  
 License:
 -------------------------------------------
 Sphinx Samples  is free software, and is released under the terms of the GPL version 2 or (at your option) any later version.
