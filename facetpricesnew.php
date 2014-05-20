@@ -32,7 +32,7 @@ $attrs = array(
 $where = array();
 
 if (isset($_GET['categories'])) {
-    $where[] = ' categories = ' . $_GET['categories'] . ' ';
+    $where[] = ' categories IN  (' . implode(',', $_GET['categories']) . ') ';
 }
 if (isset($_GET['brand_id'])) {
     $where[] = ' brand_id = ' . $_GET['brand_id'] . ' ';
@@ -51,11 +51,53 @@ if (count($where) > 0) {
 }
 
 $indexes = 'facetdemo';
-// main search
-$stmt = $ln_sph->prepare("SELECT * FROM $indexes WHERE MATCH(:match) $where  LIMIT $start,$offset ");
+$str_query = "SELECT * FROM $indexes WHERE MATCH(:match) $where LIMIT $start,$offset " . "FACET categories ORDER BY COUNT(*) DESC  " . "FACET brand_id ORDER BY COUNT(*) DESC  " . "FACET INTERVAL(price,200,400,600,800) as price_seg ORDER BY FACET() ASC  " . "FACET property ORDER BY COUNT(*) DESC  ";
+$stmt = $ln_sph->prepare($str_query);
 $stmt->bindValue(':match', $query, PDO::PARAM_STR);
+$str_query = preg_replace('/:match/', "'" . $query . "'", $str_query, 1);
 $stmt->execute();
+// get the docs
 $docs = $stmt->fetchAll();
+
+$stmt->nextRowset();
+
+// build the faceting arrays
+$facets = array();
+$categories = $stmt->fetchAll();
+foreach ($categories as $p) {
+    $facets['categories'][] = array(
+        'value' => $p['categories'],
+        'count' => $p['count(*)']
+    );
+}
+$stmt->nextRowset();
+
+$brand = $stmt->fetchAll();
+foreach ($brand as $p) {
+    $facets['brand_id'][] = array(
+        'value' => $p['brand_id'],
+        'count' => $p['count(*)']
+    );
+}
+$stmt->nextRowset();
+
+$prices = $stmt->fetchAll();
+foreach ($prices as $p) {
+    $facets['price'][] = array(
+        'value' => $p['price_seg'],
+        'count' => $p['count(*)']
+    );
+}
+$stmt->nextRowset();
+
+$property = $stmt->fetchAll();
+foreach ($property as $p) {
+    $facets['property'][] = array(
+        'value' => $p['property'],
+        'count' => $p['count(*)']
+    );
+}
+$stmt->nextRowset();
 
 // get meta, to know the total found
 $meta = $ln_sph->query("SHOW META")->fetchAll();
@@ -64,60 +106,6 @@ foreach ($meta as $m) {
 }
 $total_found = $meta_map['total_found'];
 $total = $meta_map['total'];
-
-// possible to be needed to enable multi-queries in PDO
-$ln_sph->setAttribute(PDO::ATTR_EMULATE_PREPARES, 1);
-
-$sql = array();
-$rows = array();
-
-// run optimized query, only numeric types
-$sql[] = "SELECT *,GROUPBY() as selected,COUNT(*) as cnt FROM $indexes WHERE MATCH(:match) $where  GROUP BY categories ORDER BY cnt DESC LIMIT 0,10";
-$sql[] = "SELECT *,GROUPBY() as selected,COUNT(*) as cnt FROM $indexes WHERE MATCH(:match) $where  GROUP BY brand_id ORDER BY cnt DESC LIMIT 0,10";
-$sql = implode('; ', $sql);
-$stmt = $ln_sph->prepare($sql);
-$stmt->bindValue(':match', $query, PDO::PARAM_STR);
-$stmt->execute();
-foreach ($attrs as $attr) {
-    $rows[$attr] = $stmt->fetchAll();
-    $stmt->nextRowset();
-}
-
-// expressions are not yet supported in multi-query optimization,so we run them separate
-$stmt = $ln_sph->prepare("SELECT *,GROUPBY() as selected,COUNT(*) as cnt, INTERVAL(price,200,400,600,800) as price_seg FROM
-$indexes WHERE MATCH(:match) $where  GROUP BY price_seg ORDER BY cnt DESC LIMIT 0,10");
-$stmt->bindValue(':match', $query, PDO::PARAM_STR);
-$stmt->execute();
-$prices = $stmt->fetchAll();
-
-// string attrs are not yet supported in multi-query optimization, so we run them separate
-$stmt = $ln_sph->prepare("SELECT *,COUNT(*) as cnt FROM $indexes WHERE MATCH(:match) $where GROUP BY property ORDER BY cnt DESC  LIMIT 0,10");
-$stmt->bindValue(':match', $query, PDO::PARAM_STR);
-$stmt->execute();
-$property = $stmt->fetchAll();
-
-// build the faceting arrays
-$facets = array();
-foreach ($property as $p) {
-    $facets['property'][] = array(
-        'value' => $p['property'],
-        'count' => $p['cnt']
-    );
-}
-foreach ($prices as $p) {
-    $facets['price'][] = array(
-        'value' => $p['price_seg'],
-        'count' => $p['cnt']
-    );
-}
-foreach ($rows as $k => $v) {
-    foreach ($v as $x) {
-        $facets[$k][] = array(
-            'value' => $x['selected'],
-            'count' => $x['cnt']
-        );
-    }
-}
 ?>
 <?php
 
@@ -128,6 +116,7 @@ include 'template/header.php';
 	<form method="GET" action="" id="search_form">
 		<div class="row-fluid">
 			<div class="span2">
+
 				<br> <br> <br> <br>
 
 				<fieldset>
@@ -140,8 +129,9 @@ include 'template/header.php';
 										<?='Brand '.$brands[$item['value']-1].' ('.$item['count'].')'?>
 									</label>
 									<?php endforeach;?>
-														<input type="button" name="reset_brand_id" value="Reset"
-							data-target="brand_id" class="btn">
+                                    <input type="button"
+							name="reset_brand_id" value="Reset" data-target="brand_id"
+							class="btn">
 					</div>
 				</fieldset>
 
@@ -149,9 +139,9 @@ include 'template/header.php';
 					<legend>Categories</legend>
 					<div class="control-group">
 									<?php foreach($facets['categories'] as $item):?>
-									<label class="radio"> <input type="radio" name="categories"
-							value="<?=$item['value'];?>"
-							<?=(isset($_GET['categories']) && ($_GET['categories'] == $item['value']))?'checked':'';?>>
+									<label class="radio"> <input type="checkbox"
+							name="categories[]" value="<?=$item['value'];?>"
+							<?=(in_array($item['value'], $_GET['categories']))?'checked':'';?>>
 										Category <?=$item['value'].' ('.$item['count'].')'?>
 									</label>
 									<?php endforeach;?>
@@ -174,37 +164,38 @@ include 'template/header.php';
                                     <input type="button"
 							name="reset_price" value="Reset" data-target="price" class="btn">
 					</div>
-
-					<fieldset>
-						<legend>Property</legend>
-						<div class="control-group">
+				</fieldset>
+				<fieldset>
+					<legend>Property</legend>
+					<div class="control-group">
 										<?php foreach($facets['property'] as $item):?>
 										<label class="radio"> <input type="radio" name="property"
-								value="<?=$item['value'];?>"
-								<?=(isset($_GET['property']) && ($_GET['property'] == $item['value']))?'checked':'';?>>
+							value="<?=$item['value'];?>"
+							<?=(isset($_GET['property']) && ($_GET['property'] == $item['value']))?'checked':'';?>>
 											<?=$item['value'].' ('.$item['count'].')'?>
 										</label>
 										<?php endforeach;?>
                                         <input type="button"
-								name="reset_property" value="Reset" data-target="property"
-								class="btn">
-						</div>
-					</fieldset>
-			
+							name="reset_property" value="Reset" data-target="property"
+							class="btn">
+					</div>
+				</fieldset>
+
+
 			</div>
 			<div class="span9">
 				<div class="container">
 					<ul class="nav nav-pills">
 						<ul class="nav nav-pills">
 							<li><a href="index.php">Simple Faceting</a></li>
-							<li class="active"><a href="facetprices.php">Segmented price (
-									old style )</a></li>
-							<li><a href="facetpricesnew.php">Segmented price ( FACET )</a></li>
+							<li><a href="facetprices.php">Segmented price ( old style )</a></li>
+							<li class="active"><a href="facetpricesnew.php">Segmented price (
+									FACET )</a></li>
 							<li><a href="facetmulti.php">Facets with multiple selection</a></li>
 						</ul>
 					</ul>
 					<header>
-						<h1>Facets with multiple selection</h1>
+						<h1>Facets with multiple selection (using FACET keyword)</h1>
 					</header>
 					<div class="row">
 						<div class="span9">
@@ -220,11 +211,12 @@ include 'template/header.php';
 						</div>
 					</div>
 					<div class="row">
+						<div class="alert alert-success"><?php echo $str_query;?></div>
+					
 						<?php if (count($docs) > 0): ?>
 						<p class="lead">
 							Total found:<?=$total_found?>
 						</p>
-						<div class="span9"><?php include 'template/paginator.php';?></div>
 						<div class="span9">
 							<table class="table">
 								<tr>

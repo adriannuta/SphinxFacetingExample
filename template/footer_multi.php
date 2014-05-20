@@ -1,9 +1,11 @@
-	</div>	<hr>
-		<footer>
-		
-        <p>Copyright &copy; 2001-2013, Sphinx Technologies Inc.</p>
-      </footer>
+	</div>	
 	</div>
+	</div>
+		<footer>
+		<hr>
+        <p>Copyright &copy; 2013-2014, Sphinx Technologies Inc.</p>
+      </footer>
+	
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
 	
@@ -23,6 +25,11 @@ $(document).ready(function() {
 	});
 	$(':reset').click(function(){
 		location.search ='';
+	});
+	$('input[name^=reset_]').click(function(){
+		$('input[name^='+$(this).attr('data-target')+']').removeAttr('checked');
+		$("#search_form").trigger('submit');
+			
 	});
 });
 </script>
