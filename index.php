@@ -22,7 +22,7 @@ if (isset($_GET['start'])) {
     $current = $start / $offset + 1;
 }
 
-$query = trim($_GET['query']);
+$search_query = $query = trim($_GET['query']);
 $attrs = array(
     'categories',
     'brand_id'
@@ -34,7 +34,7 @@ foreach ($attrs as $attr) {
     }
 }
 if (isset($_GET['property'])) {
-    $query .= ' @property ' . $_GET['property'];
+    $search_query .= ' @property ' . $_GET['property'];
 }
 if (count($where) > 0) {
     $where = ' AND ' . implode(' AND ', $where);
@@ -44,7 +44,7 @@ if (count($where) > 0) {
 
 $indexes = 'facetdemo';
 $stmt = $ln_sph->prepare("SELECT * FROM $indexes WHERE MATCH(:match) $where  LIMIT $start,$offset ");
-$stmt->bindValue(':match', $query, PDO::PARAM_STR);
+$stmt->bindValue(':match', $search_query, PDO::PARAM_STR);
 $stmt->execute();
 $docs = $stmt->fetchAll();
 
@@ -64,7 +64,7 @@ foreach ($attrs as $attr) {
 }
 $sql = implode('; ', $sql);
 $stmt = $ln_sph->prepare($sql);
-$stmt->bindValue(':match', $query, PDO::PARAM_STR);
+$stmt->bindValue(':match', $search_query, PDO::PARAM_STR);
 $stmt->execute();
 foreach ($attrs as $attr) {
     $rows[$attr] = $stmt->fetchAll();

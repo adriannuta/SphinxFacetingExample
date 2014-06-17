@@ -23,7 +23,7 @@ if (isset($_GET['start'])) {
 }
 
 // get the params
-$query = trim($_GET['query']);
+$search_query = $query = trim($_GET['query']);
 $attrs = array(
     'categories',
     'brand_id',
@@ -42,7 +42,7 @@ if (isset($_GET['price'])) {
     $where[] = ' price BETWEEN ' . ($_GET['price'] * 200) . ' AND ' . (($_GET['price'] + 1) * 200 - 1) . ' ';
 }
 if (isset($_GET['property'])) {
-    $query .= ' @property ' . $_GET['property'];
+    $search_query .= ' @property ' . $_GET['property'];
 }
 if (count($where) > 0) {
     $where = ' AND ' . implode(' AND ', $where);
@@ -53,7 +53,7 @@ if (count($where) > 0) {
 $indexes = 'facetdemo';
 $str_query = "SELECT * FROM $indexes WHERE MATCH(:match) $where LIMIT $start,$offset " . "FACET categories ORDER BY COUNT(*) DESC  " . "FACET brand_id ORDER BY COUNT(*) DESC  " . "FACET INTERVAL(price,200,400,600,800) as price_seg ORDER BY FACET() ASC  " . "FACET property ORDER BY COUNT(*) DESC  ";
 $stmt = $ln_sph->prepare($str_query);
-$stmt->bindValue(':match', $query, PDO::PARAM_STR);
+$stmt->bindValue(':match', $search_query, PDO::PARAM_STR);
 $str_query = preg_replace('/:match/', "'" . $query . "'", $str_query, 1);
 $stmt->execute();
 // get the docs

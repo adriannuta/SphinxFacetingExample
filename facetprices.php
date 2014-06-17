@@ -23,7 +23,7 @@ if (isset($_GET['start'])) {
 }
 
 // get the params
-$query = trim($_GET['query']);
+$search_query =$query = trim($_GET['query']);
 $attrs = array(
     'categories',
     'brand_id',
@@ -42,7 +42,7 @@ if (isset($_GET['price'])) {
     $where[] = ' price BETWEEN ' . ($_GET['price'] * 200) . ' AND ' . (($_GET['price'] + 1) * 200 - 1) . ' ';
 }
 if (isset($_GET['property'])) {
-    $query .= ' @property ' . $_GET['property'];
+    $search_query .= ' @property ' . $_GET['property'];
 }
 if (count($where) > 0) {
     $where = ' AND ' . implode(' AND ', $where);
@@ -53,7 +53,7 @@ if (count($where) > 0) {
 $indexes = 'facetdemo';
 // main search
 $stmt = $ln_sph->prepare("SELECT * FROM $indexes WHERE MATCH(:match) $where  LIMIT $start,$offset ");
-$stmt->bindValue(':match', $query, PDO::PARAM_STR);
+$stmt->bindValue(':match', $search_query, PDO::PARAM_STR);
 $stmt->execute();
 $docs = $stmt->fetchAll();
 
@@ -76,7 +76,7 @@ $sql[] = "SELECT *,GROUPBY() as selected,COUNT(*) as cnt FROM $indexes WHERE MAT
 $sql[] = "SELECT *,GROUPBY() as selected,COUNT(*) as cnt FROM $indexes WHERE MATCH(:match) $where  GROUP BY brand_id ORDER BY cnt DESC LIMIT 0,10";
 $sql = implode('; ', $sql);
 $stmt = $ln_sph->prepare($sql);
-$stmt->bindValue(':match', $query, PDO::PARAM_STR);
+$stmt->bindValue(':match', $search_query, PDO::PARAM_STR);
 $stmt->execute();
 foreach ($attrs as $attr) {
     $rows[$attr] = $stmt->fetchAll();
@@ -86,13 +86,13 @@ foreach ($attrs as $attr) {
 // expressions are not yet supported in multi-query optimization,so we run them separate
 $stmt = $ln_sph->prepare("SELECT *,GROUPBY() as selected,COUNT(*) as cnt, INTERVAL(price,200,400,600,800) as price_seg FROM
 $indexes WHERE MATCH(:match) $where  GROUP BY price_seg ORDER BY cnt DESC LIMIT 0,10");
-$stmt->bindValue(':match', $query, PDO::PARAM_STR);
+$stmt->bindValue(':match', $search_query, PDO::PARAM_STR);
 $stmt->execute();
 $prices = $stmt->fetchAll();
 
 // string attrs are not yet supported in multi-query optimization, so we run them separate
 $stmt = $ln_sph->prepare("SELECT *,COUNT(*) as cnt FROM $indexes WHERE MATCH(:match) $where GROUP BY property ORDER BY cnt DESC  LIMIT 0,10");
-$stmt->bindValue(':match', $query, PDO::PARAM_STR);
+$stmt->bindValue(':match', $search_query, PDO::PARAM_STR);
 $stmt->execute();
 $property = $stmt->fetchAll();
 
