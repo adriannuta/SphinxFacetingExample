@@ -119,7 +119,7 @@ $rows = array();
 
 $sql[] = "SELECT *$select,GROUPBY() as selected,COUNT(DISTINCT categories) as cnt FROM $indexes WHERE MATCH(:match)
 		  $where_cat
-		  GROUP BY categories  ORDER BY categories ASC LIMIT 0,10";
+		  GROUP BY categories   LIMIT 0,10";
 $sql[] = "SELECT *$select,GROUPBY() as selected,COUNT(*) as cnt FROM $indexes WHERE MATCH(:match)  
 		  $where_brand
 		  GROUP BY brand_id ORDER BY brand_id ASC LIMIT 0,10";
