@@ -1,14 +1,14 @@
 SphinxFacetingExample
 =========================
 
-These samples illustrate faceting using Sphinx search.     
-Sphinx querying is made via SphinxQL using PDO driver.    
+These samples illustrate faceting using Manticore/Sphinx search.     
+Querying is made via SphinxQL using PDO driver.    
 
 
 Requirements :
 -------------------------------------------
 LAMP  
-Sphinx search ( recommended 2.1.1 or higher)  
+Manticore or Sphinx search ( recommended 2.1.1 or higher)  
 PHP with PDO mysql  
 
 Please note that the code is made for 2.1.1. The code use LIKE operator on SHOW META.    
@@ -25,12 +25,14 @@ Generate the RT index
  
     $ php filldb.php
 
-Live demo:
+Live demo with Sphinx:
 -------------------------------------------
 http://demos.sphinxsearch.com/SphinxFacetingExample/  
 License:
 -------------------------------------------
 Sphinx Samples  is free software, and is released under the terms of the GPL version 2 or (at your option) any later version.
 
+Manticore website : https://manticoresearch.com/
+Manticore repository : https://github.com/manticoresoftware/manticore
 Sphinx website : http://sphinxsearch.com/  
 Sphinx read-only repository : https://github.com/sphinxsearch/sphinx 
